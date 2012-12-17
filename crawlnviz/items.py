@@ -6,6 +6,6 @@
 from scrapy.item import Item, Field
 
 class MozillaLinksItem(Item):
-    # define the fields for your item here like:
-    # name = Field()
-    pass
+    title = Field()
+    url = Field()
+    live = Field() #bool: is the link live?
