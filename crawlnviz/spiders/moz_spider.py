@@ -13,7 +13,7 @@ class MozSpider(BaseSpider):
   ]
 
   # ultimately parse will call 2 functions: one to get all the domains, one to handle all the domains
-  def parse(self, response):
+  def (self, response):
     items = []
     hxs = HtmlXPathSelector(response)
     domains = hxs.select('//div[@id="main-content"]/ul/li/text()').extract()

@@ -8,4 +8,5 @@ from scrapy.item import Item, Field
 class MozillaLinksItem(Item):
     title = Field()
     url = Field()
-    live = Field() #bool: is the link live?
+    active = Field() 
+    ns = Field() #authoritative nameserver
