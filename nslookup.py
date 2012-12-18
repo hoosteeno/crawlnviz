@@ -3,53 +3,46 @@ import dns.name
 import dns.query
 import dns.resolver
 
-def get_authoritative_nameserver(domain, log=lambda msg: None):
-    hostname = dns.name.from_text(domain)
+def mozilla_owns(d, log=lambda msg: None):
+    domain = dns.name.from_text(d)
+    nameservers = [
+      'ns1.mozilla.org',
+      'ns2.mozilla.org',
+      'ns3.mozilla.org',
+      'ns0.mozilla.or.jp,'
+      'ns1.mozilla.net',
+      'ns2.mozilla.net',
+      'ns3.mozilla.net',
+      'ns1.private.scl3.mozilla.com',
+      'ns2.private.scl3.mozilla.com'
+    ]
 
-    depth = 2
     default = dns.resolver.get_default_resolver()
     nameserver = default.nameservers[0]
 
-    last = False
-    while not last:
-        nodes = hostname.split(depth)
+    log('Looking up %s' % (d))
 
-        last = nodes[0].to_unicode() == u'@'
-        sub = nodes[1]
+    query = dns.message.make_query(domain, dns.rdatatype.NS)
+    response = dns.query.udp(query, nameserver)
 
-        log('Looking up %s on %s' % (sub, nameserver))
-        query = dns.message.make_query(sub, dns.rdatatype.NS)
-        response = dns.query.udp(query, nameserver)
+    rcode = response.rcode()
+    if rcode != dns.rcode.NOERROR:
+      if rcode == dns.rcode.NXDOMAIN:
+        raise Exception('%s does not exist.' % d)
+      else:
+        raise Exception('Error %s' % dns.rcode.to_text(rcode))
 
-        rcode = response.rcode()
-        if rcode != dns.rcode.NOERROR:
-            if rcode == dns.rcode.NXDOMAIN:
-                raise Exception('%s does not exist.' % sub)
-            else:
-                raise Exception('Error %s' % dns.rcode.to_text(rcode))
+    authoritative = response.answer[0][0].to_text().rstrip('.')
 
-        rrset = None
-        if len(response.authority) > 0:
-            rrset = response.authority[0]
-        else:
-            rrset = response.answer[0]
+    mozilla_owns = authoritative in nameservers
 
-        rr = rrset[0]
-        if rr.rdtype == dns.rdatatype.SOA:
-            log('Same server is authoritative for %s' % sub)
-        else:
-            authority = rr.target
-            log('%s is authoritative for %s' % (authority, sub))
-            nameserver = default.query(authority).rrset[0].to_text()
+    log('Mozilla is authoritative for %s? %s' % (d, mozilla_owns))
 
-        depth += 1
-
-    return nameserver
-
+    return mozilla_owns
 
 import sys
 
 def log(msg):
     print msg
 
-print get_authoritative_nameserver(sys.argv[1], log)
+mozilla_owns(sys.argv[1], log)
