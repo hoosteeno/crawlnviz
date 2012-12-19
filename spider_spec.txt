@@ -9,6 +9,7 @@
 #   else if it's a redirect
 #     capture the destination of the redirect as data on this url (internal? external? just www? just https?)
 #     add its redirect destination to the list of found domains and next
+#     don't follow more than 10 redirects
 #   else if mozilla is not an authoritative nameserver for this domain, capture this as data and next
 #     * use the list of authoritative nameservers; request each domain from each nameserver and look for dns authority
 #   else spider the domain [throttle this so we don't create unusual server load]
@@ -18,7 +19,7 @@
 #     if it's not a 200, capture the error as data
 #     else
 #       check whether the page has analytics coverage, 
-#         look for a string matching the analytics string
+#         look for a string matching the analytics string (or some other evidence of analytics -- script name, see "get-webtrends.sh")
 #         capture data about page's analytics
 #         add page to a running tally of percentage of pages _at this domain_ covered by analytics
 #       foreach link on the page
