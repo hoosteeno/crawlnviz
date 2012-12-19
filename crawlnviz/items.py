@@ -9,4 +9,4 @@ class MozillaLinksItem(Item):
     title = Field()
     url = Field()
     active = Field() 
-    ns = Field() #authoritative nameserver
+    owned = Field() 

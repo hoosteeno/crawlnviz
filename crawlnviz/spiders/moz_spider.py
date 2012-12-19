@@ -2,9 +2,12 @@ from scrapy.spider import BaseSpider
 from scrapy.selector import HtmlXPathSelector
 from crawlnviz.items import MozillaLinksItem
 import re
+import modo
 
 class MozSpider(BaseSpider):
   name = "moz"
+
+  nameservers = modo.moz_nameservers()
 
   allowed_domains = ["mozilla.org"]
 
@@ -12,8 +15,7 @@ class MozSpider(BaseSpider):
      "https://wiki.mozilla.org/Websites/Domain_List/Mozilla_Prod_Owned_Root_Domains"
   ]
 
-  # ultimately parse will call 2 functions: one to get all the domains, one to handle all the domains
-  def (self, response):
+  def parse (self, response):
     items = []
     hxs = HtmlXPathSelector(response)
     domains = hxs.select('//div[@id="main-content"]/ul/li/text()').extract()
@@ -21,10 +23,11 @@ class MozSpider(BaseSpider):
     for domain in domains:
       item = MozillaLinksItem()
       item['url'] = re.sub('\n', '', domain.strip())
+      #try:
+      item['owned'] = modo.moz_owned(item['url'], MozSpider.nameservers)
+      #except:
+        #pass
       items.append(item)
-
-      if len(MozSpider.allowed_domains) == 1:
-        MozSpider.allowed_domains.append(item['url'])
 
     return items
 
