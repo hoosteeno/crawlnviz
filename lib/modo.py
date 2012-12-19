@@ -34,11 +34,12 @@ def authoritative(url, nameservers):
     rcode = response.rcode()
     if rcode != dns.rcode.NOERROR:
       if rcode == dns.rcode.REFUSED:
-        log.msg('Nameserver Error: %s refused lookup.' % nameserver, level=log.WARNING)
+        log.msg('Nameserver Error: %s refused to lookup %s.' % (nameserver, url), level=log.WARNING)
       elif rcode == dns.rcode.NXDOMAIN:
-        log.msg('Nameserver Error: %s does not exist.' % nameserver, level=log.WARNING)
+        log.msg('Nameserver Error: server cannot find %s.' % url, level=log.WARNING)
       else:
-        log.msg('Nameserver Error: %s' % dns.rcode.to_text(rcode), level=log.WARNING)
+        log.msg('Nameserver Error: while looking up %s received %s' % (url, dns.rcode.to_text(rcode)), level=log.WARNING)
+      return owned
 
     # for every nameserver in the response...
     for rns in response.answer[0]:

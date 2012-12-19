@@ -8,11 +8,13 @@ from scrapy.item import Item, Field
 class Website(Item):
     title = Field()
     url = Field()
-    active = Field() 
     owned = Field() 
+    status = Field()
+    analytics = Field()
+    pages = Field()
 
     def __str__(self):
-        return "%s: owned=%s,active=%s" % (self.get('url'), self.get('owned'), self.get('active')) 
+      return "%s: url=%s,owned=%s,status=%s,analytics=%s" % (self.get('title'), self.get('url'), self.get('owned'), self.get('status'), self.get('analytics') 
 
     def wikitext_row(self):
-        return "a wikitext row representing this website"
+      return "a wikitext row representing this website"
