@@ -1,0 +1,82 @@
+# spider spec
+
+# while there are unspidered domains in the canonical + found lists of domains, foreach domain
+#   if it's blocking spiders, capture this data and move to next
+#     * grab the robots.txt file and look for "^Disallow: /$"; capture this as data.
+#   else if it's in the list of domains to ignore, next
+#   else if it's not a 200, capture the error as data and next
+#   else if it's a default apache page, next 
+#   else if it's a redirect
+#     capture the destination of the redirect as data on this url (internal? external? just www? just https?)
+#     add its redirect destination to the list of found domains and next
+#   else if mozilla is not an authoritative nameserver for this domain, capture this as data and next
+#     * use the list of authoritative nameservers; request each domain from each nameserver and look for dns authority
+#   else spider the domain [throttle this so we don't create unusual server load]
+#     * timeout 5s
+#     * don't check certs
+#     flag it as spidered
+#     if it's not a 200, capture the error as data
+#     else
+#       check whether the page has analytics coverage, 
+#         look for a string matching the analytics string
+#         capture data about page's analytics
+#         add page to a running tally of percentage of pages _at this domain_ covered by analytics
+#       foreach link on the page
+#         add it to this page's list of links
+#         if link is to a domain already in the queue or a page already spidered, skip
+#         else if link is to a page on the same domain and it's not already spidered 
+#           recurse on the linked page
+#         else if the domain is not already on the found or canonical list
+#           add the domain to the list of found domains
+# output formats/options 
+#   "output-visualization"
+#     * for all canonical domains, output their pages & all links as a network diagram with domains represented as clusters (??)
+#   "output-wiki.txt":
+#     for all domains output:
+#       {| class='wikitable sortable' border='1'
+#       |-
+#       ! scope='col' | Web Address
+#       ! scope='col' | Status
+#       ! scope='col' | Analytics Installed
+#       ! scope='col' | Analytics Page Coverage
+#       ! scope='col' | Mozilla Owned
+#   "output-ok.txt"
+#     for all domains with success error codes output:
+#       * link(url)
+#   "output-http.txt"
+#     for all http domains output 
+#       * link(url)
+#   "output-ftp.txt"
+#     for all ftp domains output 
+#       * url
+#   "output-robots.txt"
+#     for all sites with robots.txt banning all robots output
+#       * url
+#   "active-websites.txt"
+#     for all sites in canonical domain list sorted alphabetically output
+#       header(link($title))
+#       == $title ==
+#       * Prod URL:  $address
+#       * Stage URL:
+#       * Code Repo:
+#       * L10N Repo:
+#       * Code:
+#       * Licensing:
+#       * Product Owner:
+#       * Dev Team:
+#       * QA Lead:
+#       * Team Email:
+#       * Last reviewed:
+#   "output-prod.txt"
+#     tbd
+#   "output-prod-analytics.txt"
+#     tbd
+#   "output-owned.txt"
+#     tbd
+#   "output-not-owned.txt"
+#     tbd
+#   "output-prod-owned.txt"
+#     tbd
+#   "output-prod-old.txt"
+#     tbd
+#   "output-prod-owned-root-domains.txt"

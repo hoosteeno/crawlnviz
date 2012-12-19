@@ -1,4 +1,5 @@
 # Filename: modo.py
+# TODO: make it more general (names, cfg, etc)
 
 import dns
 import dns.name
@@ -7,7 +8,11 @@ import dns.resolver
 
 from scrapy import log
 
+## 
+# check if the list of nameservers includes a nameserver that is authoritative for the url 
+##
 def moz_nameservers():
+    # TODO: move this into cfg 
     nameservers = {
       'ns1.mozilla.org': '',
       'ns2.mozilla.org': '',
@@ -24,50 +29,73 @@ def moz_nameservers():
     default = dns.resolver.get_default_resolver()
     nameserver = default.nameservers[0]
 
+    # TODO: DRY this below
+    # foreach nameserver in our list
     for ns_name, ns_ip in nameservers.iteritems():
       # find the ip of the nameserver
       query = dns.message.make_query(ns_name, dns.rdatatype.A)
-      response = dns.query.udp(query, nameserver, timeout=4)
-
-      rcode = response.rcode()
-      if rcode != dns.rcode.NOERROR:
-        if rcode == dns.rcode.NXDOMAIN:
-          log.msg('%s does not exist.' % (ns_name), level=log.WARNING)
-        else:
-          log.msg('Error %s' % (dns.rcode.to_text(rcode)), level=log.WARNING)
-
-        continue 
-
-      nameservers[ns_name] = (response.answer[0][0]).to_text()
-
-      log.msg('%s has IP %s' % (ns_name, nameservers[ns_name]), level=log.DEBUG)
-
-    # prune the list of nameservers -- no need to iterate on those we can't attach to
-    nameservers = dict([(k,v) for k,v in nameservers.items() if len(v)>0])
-    return nameservers
-
-def moz_owned(url, nameservers):
-    domain = dns.name.from_text(url)
-
-    owned = False
-
-    for ns_name, ns_ip in nameservers.iteritems():
-
-      log.msg('Looking up %s on %s' % (url, ns_name), level=log.DEBUG)
-
-      query = dns.message.make_query(domain, dns.rdatatype.NS)
-      response = dns.query.udp(query, ns_ip, timeout=4)
+      try:
+        response = dns.query.udp(query, nameserver, timeout=4)
+      except:
+        log.msg('Unable to lookup %s on %s: %s' % (url, ns_name, sys.exc_info()[0]), level=log.WARNING)
+        continue
 
       rcode = response.rcode()
       if rcode != dns.rcode.NOERROR:
         if rcode == dns.rcode.REFUSED:
-          continue
-        if rcode == dns.rcode.NXDOMAIN:
-          raise Exception('%s does not exist.' % url)
+          log.msg('Nameserver Error: %s refused lookup.' % ns_name, level=log.WARNING)
+        elif rcode == dns.rcode.NXDOMAIN:
+          log.msg('Nameserver Error: %s does not exist.' % ns_name, level=log.WARNING)
         else:
-          raise Exception('Error %s' % dns.rcode.to_text(rcode))
+          log.msg('Nameserver Error: %s' % dns.rcode.to_text(rcode), level=log.WARNING)
+        continue 
 
+      # assign the IP we found
+      nameservers[ns_name] = (response.answer[0][0]).to_text()
+      log.msg('%s has IP %s' % (ns_name, nameservers[ns_name]), level=log.DEBUG)
+
+    # prune the list of nameservers -- no need to iterate on those we can't attach to
+    nameservers = dict([(k,v) for k,v in nameservers.items() if len(v)>0])
+
+    return nameservers
+
+## 
+# check if the list of nameservers includes a nameserver that is authoritative for the url 
+##
+def moz_owned(url, nameservers):
+
+    # create a dns name from the URL
+    domain = dns.name.from_text(url)
+
+    owned = False
+
+    # TODO: DRY this above
+    for ns_name, ns_ip in nameservers.iteritems():
+
+      log.msg('Looking up %s on %s (%s)' % (url, ns_name, ns_ip), level=log.DEBUG)
+
+      # lookup the on this nameserver
+      query = dns.message.make_query(domain, dns.rdatatype.NS)
+      try:
+        response = dns.query.udp(query, ns_ip, timeout=5)
+      except:
+        log.msg('Unable to lookup %s on %s: %s' % (url, ns_name, sys.exc_info()[0]), level=log.WARNING)
+        continue
+
+      rcode = response.rcode()
+      if rcode != dns.rcode.NOERROR:
+        if rcode == dns.rcode.REFUSED:
+          log.msg('Nameserver Error: %s refused lookup.' % ns_name, level=log.WARNING)
+        elif rcode == dns.rcode.NXDOMAIN:
+          log.msg('Nameserver Error: %s does not exist.' % ns_name, level=log.WARNING)
+        else:
+          log.msg('Nameserver Error: %s' % dns.rcode.to_text(rcode), level=log.WARNING)
+        continue 
+
+      # we got a nameserver here
       rns = response.answer[0][0].to_text().rstrip('.')
+  
+      # TODO: fix. this is not an adequate test of authority.
       if rns == ns_name:
         owned = True
         log.msg('->Mozilla is authoritative for %s.' % (url), level=log.DEBUG)
