@@ -9,7 +9,18 @@ import modo
 class MozSpider(BaseSpider):
   name = "moz"
 
-  nameservers = modo.moz_nameservers()
+  # TODO: move into cfg
+  nameservers = {
+    'ns1.mozilla.org': '',
+    'ns2.mozilla.org': '',
+    'ns3.mozilla.org': '',
+    'ns0.mozilla.or.jp': '',
+    'ns1.mozilla.net': '',
+    'ns2.mozilla.net': '',
+    'ns3.mozilla.net': '',
+    'ns1.private.scl3.mozilla.com': '',
+    'ns2.private.scl3.mozilla.com': ''
+  }
 
   allowed_domains = ["mozilla.org"]
 
@@ -26,7 +37,7 @@ class MozSpider(BaseSpider):
       item = Website()
       item['url'] = re.sub('\n', '', domain.strip())
       try:
-        item['owned'] = modo.moz_owned(item['url'], MozSpider.nameservers)
+        item['owned'] = modo.authoritative(item['url'], MozSpider.nameservers)
       except:
         item['owned'] = "N/A"
       items.append(item)
