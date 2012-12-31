@@ -14,7 +14,7 @@ class Website(Item):
     pages = Field()
 
     def __str__(self):
-      return "%s: url=%s,owned=%s,status=%s,analytics=%s" % (self.get('title'), self.get('url'), self.get('owned'), self.get('status'), self.get('analytics') 
+      return "%s: url=%s,owned=%s,status=%s,analytics=%s" % (self.get('title'), self.get('url'), self.get('owned'), self.get('status'), self.get('analytics')) 
 
-    def wikitext_row(self):
+    def __wikitext_row__(self):
       return "a wikitext row representing this website"

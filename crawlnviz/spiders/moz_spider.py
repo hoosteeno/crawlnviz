@@ -1,20 +1,22 @@
+import sys
+import re
 from scrapy import log
 from scrapy.spider import BaseSpider
 from scrapy.selector import HtmlXPathSelector
 from crawlnviz.items import Website
-import sys
-import re
-import modo
+import dns_tools
 
 class MozSpider(BaseSpider):
   name = "moz"
 
   # TODO: move into cfg
   nameservers = {
+    'ns.mozilla.org',
     'ns1.mozilla.org',
     'ns2.mozilla.org',
     'ns3.mozilla.org',
     'ns0.mozilla.or.jp',
+    'ns.mozilla.net',
     'ns1.mozilla.net',
     'ns2.mozilla.net',
     'ns3.mozilla.net',
@@ -41,7 +43,7 @@ class MozSpider(BaseSpider):
 
       # set the owned flag
       try:
-        website['owned'] = modo.authoritative(website['url'], MozSpider.nameservers)
+        website['owned'] = dns_tools.check_authority(website['url'], MozSpider.nameservers)
       except:
         log.msg('Unable to determine ownership of %s: %s' % (website['url'], sys.exc_info()[0]), level=log.WARNING)
 
